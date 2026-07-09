@@ -1,0 +1,6 @@
+.env
+pgdata/
+.idea/
+*.log
+bin/
+docker-compose.yml
