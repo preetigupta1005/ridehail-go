@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/preetigupta1005/ridehail-go/handlers"
+	"github.com/preetigupta1005/ridehail-go/middlewares"
 )
 
 type Server struct {
@@ -24,7 +25,14 @@ func SetUpRoutes() *Server {
 
 	mux.HandleFunc("POST /signup", handlers.SignupHandler)
 	mux.HandleFunc("POST /login", handlers.LoginHandler)
-	
+
+	//mux.Handle("POST /v1/rides/request", middlewares.PassengerOnly(handlers.RequestRideHandler))
+	//mux.Handle("POST /v1/rides/{id}/accept", middlewares.DriverOnly(handlers.AcceptRideHandler))
+	//mux.Handle("POST /v1/rides/{id}/start", middlewares.DriverOnly(handlers.StartRideHandler))
+	//mux.Handle("POST /v1/rides/{id}/cancel", middlewares.AuthOnly(handlers.CancelRideHandler))
+	mux.Handle("PATCH /driver/availability", middlewares.DriverOnly(handlers.UpdateAvailabilityHandler))
+	mux.Handle("PATCH /driver/location", middlewares.DriverOnly(handlers.UpdateLocationHandler))
+
 	return &Server{Mux: mux}
 }
 func (svc *Server) Run(port string) error {

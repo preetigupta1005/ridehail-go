@@ -1,14 +1,15 @@
 package repository
 
 import (
+	"github.com/jmoiron/sqlx"
 	"github.com/preetigupta1005/ridehail-go/database"
 	"github.com/preetigupta1005/ridehail-go/models"
 )
 
-func CreateUser(user *models.User) error {
+func CreateUser(tx *sqlx.Tx, user *models.User) error {
 	query := `INSERT INTO users (name, email, phone, password_hash, role) 
 	          VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at, updated_at`
-	return database.DB.QueryRowx(query, user.Name, user.Email, user.Phone, user.PasswordHash, user.Role).
+	return tx.QueryRowx(query, user.Name, user.Email, user.Phone, user.PasswordHash, user.Role).
 		Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 }
 

@@ -14,11 +14,14 @@ type User struct {
 }
 
 type SignupRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
+	Name          string `json:"name"`
+	Email         string `json:"email"`
+	Phone         string `json:"phone"`
+	Password      string `json:"password"`
+	Role          string `json:"role"`
+	VehicleNumber string `json:"vehicle_number,omitempty"`
+	VehicleType   string `json:"vehicle_type,omitempty"`
+	LicenseNumber string `json:"license_number,omitempty"`
 }
 
 type LoginRequest struct {

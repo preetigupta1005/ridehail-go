@@ -3,6 +3,8 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/jmoiron/sqlx"
+	"github.com/preetigupta1005/ridehail-go/database"
 	"github.com/preetigupta1005/ridehail-go/models"
 	"github.com/preetigupta1005/ridehail-go/repository"
 	"github.com/preetigupta1005/ridehail-go/utils"
@@ -20,6 +22,11 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Role == "driver" && (req.VehicleNumber == "" || req.VehicleType == "" || req.LicenseNumber == "") {
+		utils.RespondError(w, http.StatusBadRequest, nil, "vehicle details required for driver signup")
+		return
+	}
+
 	hashedPwd, err := utils.HashedPassword(req.Password)
 	if err != nil {
 		utils.RespondError(w, http.StatusInternalServerError, err, "failed to process password")
@@ -34,10 +41,23 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		Role:         req.Role,
 	}
 
-	if err := repository.CreateUser(user); err != nil {
+	err = database.Tx(func(tx *sqlx.Tx) error {
+		if err := repository.CreateUser(tx, user); err != nil {
+			return err
+		}
+		if req.Role == "driver" {
+			if err := repository.CreateDriverDetails(tx, user.ID, req.VehicleNumber, req.VehicleType, req.LicenseNumber); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
 		utils.RespondError(w, http.StatusInternalServerError, err, "failed to create user")
 		return
 	}
+
 	utils.RespondJSON(w, http.StatusCreated, user)
 }
 
