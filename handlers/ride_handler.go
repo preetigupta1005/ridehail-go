@@ -49,3 +49,15 @@ func RequestRideHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.RespondJSON(w, http.StatusCreated, ride)
 }
+
+func AcceptRideHandler(w http.ResponseWriter, r *http.Request) {
+	driverID := r.Context().Value(middlewares.UserIDKey).(string)
+	rideID := r.PathValue("id")
+
+	if err := repository.AcceptRideRequest(rideID, driverID); err != nil {
+		utils.RespondError(w, http.StatusConflict, err, "failed to accept ride")
+		return
+	}
+
+	utils.RespondJSON(w, http.StatusOK, map[string]string{"message": "ride accepted"})
+}

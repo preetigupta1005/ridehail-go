@@ -23,14 +23,15 @@ const (
 func SetUpRoutes() *Server {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /signup", handlers.SignupHandler)
-	mux.HandleFunc("POST /login", handlers.LoginHandler)
+	mux.HandleFunc("POST /v1/signup", handlers.SignupHandler)
+	mux.HandleFunc("POST /v1/login", handlers.LoginHandler)
 
-	mux.Handle("PATCH /driver/availability", middlewares.DriverOnly(handlers.UpdateAvailabilityHandler))
-	mux.Handle("PATCH /driver/location", middlewares.DriverOnly(handlers.UpdateLocationHandler))
+	mux.Handle("PATCH /v1/driver/availability", middlewares.DriverOnly(handlers.UpdateAvailabilityHandler))
+	mux.Handle("PATCH /v1/driver/location", middlewares.DriverOnly(handlers.UpdateLocationHandler))
 
 	mux.Handle("POST /v1/rides/request", middlewares.PassengerOnly(handlers.RequestRideHandler))
 
+	mux.Handle("POST /v1/rides/{id}/accept", middlewares.DriverOnly(handlers.AcceptRideHandler))
 	return &Server{Mux: mux}
 }
 func (svc *Server) Run(port string) error {
