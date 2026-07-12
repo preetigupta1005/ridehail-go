@@ -99,7 +99,10 @@ func CancelRideHandler(w http.ResponseWriter, r *http.Request) {
 	role := r.Context().Value(middlewares.RoleKey).(string)
 	rideID := r.PathValue("id")
 
-	if err := repository.CancelRide(rideID, userID, role); err != nil {
+	var req models.CancelRideBody
+	utils.ParseBody(r, &req) //optional-no need to handle error
+
+	if err := repository.CancelRide(rideID, userID, role, req.Reason); err != nil {
 		utils.RespondError(w, http.StatusForbidden, err, "failed to cancel ride")
 		return
 	}

@@ -9,9 +9,11 @@ import (
 )
 
 func CreateRide(ride *models.Ride) error {
-	query := `INSERT INTO rides (passenger_id, pickup_lat, pickup_lng, drop_lat, drop_lng, status)
-	          VALUES ($1, $2, $3, $4, $5, 'requested') RETURNING id,status, requested_at`
-	return database.DB.QueryRowx(query, ride.PassengerID, ride.PickupLat, ride.PickupLng, ride.DropLat, ride.DropLng).
+	query := `INSERT INTO rides (passenger_id, pickup_lat, pickup_lng, pickup_address, drop_lat, drop_lng, drop_address, status)
+	          VALUES ($1, $2, $3, $4, $5, $6, $7, 'requested') 
+	          RETURNING id, status, requested_at`
+	return database.DB.QueryRowx(query, ride.PassengerID, ride.PickupLat, ride.PickupLng, ride.PickupAddress,
+		ride.DropLat, ride.DropLng, ride.DropAddress).
 		Scan(&ride.ID, &ride.Status, &ride.RequestedAt)
 }
 
@@ -86,7 +88,7 @@ func EndRide(rideID, driverID string) (float64, float64, error) {
 	return fare, distanceKm, nil
 }
 
-func CancelRide(rideID, userID, role string) error {
+func CancelRide(rideID, userID, role, reason string) error {
 	return database.Tx(func(tx *sqlx.Tx) error {
 		var passengerID, driverID *string
 		err := tx.QueryRowx(
@@ -101,9 +103,9 @@ func CancelRide(rideID, userID, role string) error {
 		}
 
 		result, err := tx.Exec(
-			`UPDATE rides SET status='cancelled', cancelled_at=now(), cancelled_by=$1 
-		 WHERE id=$2 AND status NOT IN ('completed', 'cancelled')`,
-			role, rideID,
+			`UPDATE rides SET status='cancelled', cancelled_at=now(), cancelled_by=$1 ,cancellation_reason=$2
+		 WHERE id=$3 AND status NOT IN ('completed', 'cancelled')`,
+			role, reason, rideID,
 		)
 		if err != nil {
 			return err
