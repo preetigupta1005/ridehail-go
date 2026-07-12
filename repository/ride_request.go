@@ -54,6 +54,18 @@ func AcceptRideRequest(rideID, driverID string) error {
 			`UPDATE rides SET driver_id=$1, status='accepted', accepted_at=now() WHERE id=$2`,
 			driverID, rideID,
 		)
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.Exec(
+			`UPDATE driver_details SET is_on_ride=true WHERE user_id=$1`,
+			driverID,
+		)
+		if err != nil {
+			return err
+		}
+
 		return err
 	})
 }

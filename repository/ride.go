@@ -17,7 +17,7 @@ func CreateRide(ride *models.Ride) error {
 
 func GetNearbyDrivers(lat, lng float64, radiusMeters int) ([]string, error) {
 	query := `SELECT user_id FROM driver_details
-	          WHERE is_available = true
+	          WHERE is_available = true  AND is_on_ride = false
 	          AND ST_DWithin(current_location, ST_SetSRID(ST_MakePoint($1, $2), 4326), $3)`
 	var driverIDs []string
 	err := database.DB.Select(&driverIDs, query, lng, lat, radiusMeters)
@@ -77,7 +77,13 @@ func EndRide(rideID, driverID string) (float64, float64, error) {
 	if rows == 0 {
 		return 0, 0, errors.New("ride not found or not ongoing")
 	}
-	return fare, distanceMeters, nil
+
+	_, err = database.DB.Exec(`UPDATE driver_details SET is_on_ride=false WHERE user_id=$1`, driverID)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return fare, distanceKm, nil
 }
 
 func CancelRide(rideID, userID, role string) error {
@@ -112,6 +118,16 @@ func CancelRide(rideID, userID, role string) error {
 			 WHERE ride_id=$1 AND status='sent'`,
 			rideID,
 		)
-		return err
+		if err != nil {
+			return err
+		}
+
+		if driverID != nil {
+			_, err = tx.Exec(`UPDATE driver_details SET is_on_ride=false WHERE user_id=$1`, *driverID)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }
