@@ -19,11 +19,13 @@ func RequestRideHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ride := &models.Ride{
-		PassengerID: userID,
-		PickupLat:   req.PickupLat,
-		PickupLng:   req.PickupLng,
-		DropLat:     req.DropLat,
-		DropLng:     req.DropLng,
+		PassengerID:   userID,
+		PickupLat:     req.PickupLat,
+		PickupLng:     req.PickupLng,
+		PickupAddress: &req.PickupAddress,
+		DropLat:       req.DropLat,
+		DropLng:       req.DropLng,
+		DropAddress:   &req.DropAddress,
 	}
 
 	if err := repository.CreateRide(ride); err != nil {

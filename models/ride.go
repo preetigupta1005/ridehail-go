@@ -8,10 +8,10 @@ type Ride struct {
 	DriverID           *string    `db:"driver_id" json:"driver_id,omitempty"`
 	PickupLat          float64    `db:"pickup_lat" json:"pickup_lat"`
 	PickupLng          float64    `db:"pickup_lng" json:"pickup_lng"`
-	PickupAddress      string     `db:"pickup_address" json:"pickup_address,omitempty"`
+	PickupAddress      *string    `db:"pickup_address" json:"pickup_address,omitempty"`
 	DropLat            float64    `db:"drop_lat" json:"drop_lat"`
 	DropLng            float64    `db:"drop_lng" json:"drop_lng"`
-	DropAddress        string     `db:"drop_address" json:"drop_address,omitempty"`
+	DropAddress        *string    `db:"drop_address" json:"drop_address,omitempty"`
 	Status             string     `db:"status" json:"status"`
 	FareAmount         *float64   `db:"fare_amount" json:"fare_amount,omitempty"`
 	DistanceKm         *float64   `db:"distance_km" json:"distance_km,omitempty"`
