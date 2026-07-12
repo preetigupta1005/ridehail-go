@@ -6,6 +6,7 @@ import (
 	"github.com/preetigupta1005/ridehail-go/middlewares"
 	"github.com/preetigupta1005/ridehail-go/models"
 	"github.com/preetigupta1005/ridehail-go/repository"
+	"github.com/preetigupta1005/ridehail-go/services"
 	"github.com/preetigupta1005/ridehail-go/utils"
 )
 
@@ -17,35 +18,13 @@ func RequestRideHandler(w http.ResponseWriter, r *http.Request) {
 		utils.RespondError(w, http.StatusBadRequest, err, "invalid request body")
 		return
 	}
-
-	ride := &models.Ride{
-		PassengerID:   userID,
-		PickupLat:     req.PickupLat,
-		PickupLng:     req.PickupLng,
-		PickupAddress: &req.PickupAddress,
-		DropLat:       req.DropLat,
-		DropLng:       req.DropLng,
-		DropAddress:   &req.DropAddress,
-	}
-
-	if err := repository.CreateRide(ride); err != nil {
-		utils.RespondError(w, http.StatusInternalServerError, err, "failed to create ride")
-		return
-	}
-
-	driverIDs, err := repository.GetNearbyDrivers(req.PickupLat, req.PickupLng, 5000)
+	ride, err := services.RequestRide(
+		userID,
+		req.PickupLat, req.PickupLng, req.PickupAddress,
+		req.DropLat, req.DropLng, req.DropAddress,
+	)
 	if err != nil {
-		utils.RespondError(w, http.StatusInternalServerError, err, "failed to find nearby drivers")
-		return
-	}
-
-	if len(driverIDs) == 0 {
-		utils.RespondJSON(w, http.StatusOK, map[string]string{"message": "ride created, no drivers nearby yet"})
-		return
-	}
-
-	if err := repository.CreateRideRequests(ride.ID, driverIDs); err != nil {
-		utils.RespondError(w, http.StatusInternalServerError, err, "failed to notify drivers")
+		utils.RespondError(w, http.StatusInternalServerError, err, "failed to create ride")
 		return
 	}
 
