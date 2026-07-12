@@ -1,6 +1,9 @@
 package repository
 
 import (
+	"errors"
+
+	"github.com/jmoiron/sqlx"
 	"github.com/preetigupta1005/ridehail-go/database"
 	"github.com/preetigupta1005/ridehail-go/models"
 )
@@ -19,4 +22,96 @@ func GetNearbyDrivers(lat, lng float64, radiusMeters int) ([]string, error) {
 	var driverIDs []string
 	err := database.DB.Select(&driverIDs, query, lng, lat, radiusMeters)
 	return driverIDs, err
+}
+
+func StartRide(rideID, driverID string) error {
+	result, err := database.DB.Exec(
+		`UPDATE rides SET status='ongoing', started_at=now() 
+		 WHERE id=$1 AND driver_id=$2 AND status='accepted'`,
+		rideID, driverID,
+	)
+	if err != nil {
+		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return errors.New("ride not found or not in accepted state")
+	}
+	return nil
+}
+
+func EndRide(rideID, driverID string) error {
+	var pickupLat, pickupLng, dropLat, dropLng float64
+	err := database.DB.QueryRowx(
+		`SELECT pickup_lat, pickup_lng, drop_lat, drop_lng FROM rides WHERE id=$1`, rideID,
+	).Scan(&pickupLat, &pickupLng, &dropLat, &dropLng)
+	if err != nil {
+		return err
+	}
+
+	var distanceMeters float64
+	err = database.DB.QueryRowx(
+		`SELECT ST_Distance(
+			ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+			ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography
+		)`,
+		pickupLng, pickupLat, dropLng, dropLat,
+	).Scan(&distanceMeters)
+	if err != nil {
+		return err
+	}
+
+	distanceKm := distanceMeters / 1000
+	fare := 30 + (distanceKm * 10)
+
+	result, err := database.DB.Exec(
+		`UPDATE rides SET status='completed', completed_at=now(), 
+		 fare_amount=$1, distance_km=$2 
+		 WHERE id=$3 AND driver_id=$4 AND status='ongoing'`,
+		fare, distanceKm, rideID, driverID,
+	)
+	if err != nil {
+		return err
+	}
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return errors.New("ride not found or not ongoing")
+	}
+	return nil
+}
+
+func CancelRide(rideID, userID, role string) error {
+	return database.Tx(func(tx *sqlx.Tx) error {
+		var passengerID, driverID *string
+		err := tx.QueryRowx(
+			`SELECT passenger_id, driver_id FROM rides WHERE id=$1`, rideID,
+		).Scan(&passengerID, &driverID)
+		if err != nil {
+			return err
+		}
+
+		if (passengerID == nil || *passengerID != userID) && (driverID == nil || *driverID != userID) {
+			return errors.New("not authorized to cancel this ride")
+		}
+
+		result, err := tx.Exec(
+			`UPDATE rides SET status='cancelled', cancelled_at=now(), cancelled_by=$1 
+		 WHERE id=$2 AND status NOT IN ('completed', 'cancelled')`,
+			role, rideID,
+		)
+		if err != nil {
+			return err
+		}
+		rows, _ := result.RowsAffected()
+		if rows == 0 {
+			return errors.New("ride cannot be cancelled")
+		}
+
+		_, err = tx.Exec(
+			`UPDATE ride_requests SET status='expired' 
+			 WHERE ride_id=$1 AND status='sent'`,
+			rideID,
+		)
+		return err
+	})
 }

@@ -1,0 +1,1 @@
+ALTER TABLE driver_details ALTER COLUMN is_available SET DEFAULT false;

@@ -61,3 +61,41 @@ func AcceptRideHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.RespondJSON(w, http.StatusOK, map[string]string{"message": "ride accepted"})
 }
+
+func StartRideHandler(w http.ResponseWriter, r *http.Request) {
+	driverID := r.Context().Value(middlewares.UserIDKey).(string)
+	rideID := r.PathValue("id")
+
+	if err := repository.StartRide(rideID, driverID); err != nil {
+		utils.RespondError(w, http.StatusConflict, err, "failed to start ride")
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, map[string]string{"message": "ride started"})
+}
+
+type EndRideBody struct {
+	FareAmount float64 `json:"fare_amount"`
+}
+
+func EndRideHandler(w http.ResponseWriter, r *http.Request) {
+	driverID := r.Context().Value(middlewares.UserIDKey).(string)
+	rideID := r.PathValue("id")
+
+	if err := repository.EndRide(rideID, driverID); err != nil {
+		utils.RespondError(w, http.StatusConflict, err, "failed to end ride")
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, map[string]string{"message": "ride completed"})
+}
+
+func CancelRideHandler(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(middlewares.UserIDKey).(string)
+	role := r.Context().Value(middlewares.RoleKey).(string)
+	rideID := r.PathValue("id")
+
+	if err := repository.CancelRide(rideID, userID, role); err != nil {
+		utils.RespondError(w, http.StatusForbidden, err, "failed to cancel ride")
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, map[string]string{"message": "ride cancelled"})
+}
