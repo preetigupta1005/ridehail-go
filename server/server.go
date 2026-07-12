@@ -37,6 +37,8 @@ func SetUpRoutes() *Server {
 	mux.Handle("POST /v1/rides/{id}/end", middlewares.DriverOnly(handlers.EndRideHandler))
 	mux.Handle("POST /v1/rides/{id}/cancel", middlewares.AuthOnly(handlers.CancelRideHandler))
 
+	mux.Handle("GET /rides/my", middlewares.AuthOnly(handlers.GetMyRidesHandler))
+
 	return &Server{Mux: mux}
 }
 func (svc *Server) Run(port string) error {

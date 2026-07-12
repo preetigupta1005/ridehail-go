@@ -108,3 +108,23 @@ func CancelRideHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.RespondJSON(w, http.StatusOK, map[string]string{"message": "ride cancelled"})
 }
+
+func GetMyRidesHandler(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(middlewares.UserIDKey).(string)
+	role := r.Context().Value(middlewares.RoleKey).(string)
+
+	var rides []models.Ride
+	var err error
+
+	if role == "passenger" {
+		rides, err = repository.GetRidesByPassenger(userID)
+	} else {
+		rides, err = repository.GetRidesByDriver(userID)
+	}
+
+	if err != nil {
+		utils.RespondError(w, http.StatusInternalServerError, err, "failed to fetch rides")
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, rides)
+}

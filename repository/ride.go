@@ -133,3 +133,17 @@ func CancelRide(rideID, userID, role, reason string) error {
 		return nil
 	})
 }
+
+func GetRidesByPassenger(passengerID string) ([]models.Ride, error) {
+	var rides []models.Ride
+	query := `SELECT * FROM rides WHERE passenger_id=$1 ORDER BY requested_at DESC`
+	err := database.DB.Select(&rides, query, passengerID)
+	return rides, err
+}
+
+func GetRidesByDriver(driverID string) ([]models.Ride, error) {
+	var rides []models.Ride
+	query := `SELECT * FROM rides WHERE driver_id=$1 ORDER BY requested_at DESC`
+	err := database.DB.Select(&rides, query, driverID)
+	return rides, err
+}
