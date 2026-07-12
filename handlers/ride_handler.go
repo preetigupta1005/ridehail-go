@@ -81,11 +81,17 @@ func EndRideHandler(w http.ResponseWriter, r *http.Request) {
 	driverID := r.Context().Value(middlewares.UserIDKey).(string)
 	rideID := r.PathValue("id")
 
-	if err := repository.EndRide(rideID, driverID); err != nil {
+	fare, distance, err := repository.EndRide(rideID, driverID)
+	if err != nil {
 		utils.RespondError(w, http.StatusConflict, err, "failed to end ride")
 		return
 	}
-	utils.RespondJSON(w, http.StatusOK, map[string]string{"message": "ride completed"})
+
+	utils.RespondJSON(w, http.StatusOK, map[string]interface{}{
+		"message":     "ride completed",
+		"fare_amount": fare,
+		"distance_km": distance,
+	})
 }
 
 func CancelRideHandler(w http.ResponseWriter, r *http.Request) {

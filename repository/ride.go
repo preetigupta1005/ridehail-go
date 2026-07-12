@@ -40,13 +40,13 @@ func StartRide(rideID, driverID string) error {
 	return nil
 }
 
-func EndRide(rideID, driverID string) error {
+func EndRide(rideID, driverID string) (float64, float64, error) {
 	var pickupLat, pickupLng, dropLat, dropLng float64
 	err := database.DB.QueryRowx(
 		`SELECT pickup_lat, pickup_lng, drop_lat, drop_lng FROM rides WHERE id=$1`, rideID,
 	).Scan(&pickupLat, &pickupLng, &dropLat, &dropLng)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
 	var distanceMeters float64
@@ -58,7 +58,7 @@ func EndRide(rideID, driverID string) error {
 		pickupLng, pickupLat, dropLng, dropLat,
 	).Scan(&distanceMeters)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 
 	distanceKm := distanceMeters / 1000
@@ -71,13 +71,13 @@ func EndRide(rideID, driverID string) error {
 		fare, distanceKm, rideID, driverID,
 	)
 	if err != nil {
-		return err
+		return 0, 0, err
 	}
 	rows, _ := result.RowsAffected()
 	if rows == 0 {
-		return errors.New("ride not found or not ongoing")
+		return 0, 0, errors.New("ride not found or not ongoing")
 	}
-	return nil
+	return fare, distanceMeters, nil
 }
 
 func CancelRide(rideID, userID, role string) error {
