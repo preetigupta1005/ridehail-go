@@ -26,3 +26,12 @@ func UpdateLocation(userID string, lat, lng float64) error {
 	_, err := database.DB.Exec(query, lng, lat, userID)
 	return err
 }
+
+func GetActivePassengerID(driverID string) (string, error) {
+	var passengerID string
+	err := database.DB.Get(&passengerID,
+		`SELECT passenger_id FROM rides WHERE driver_id=$1 AND status IN ('accepted','ongoing') `,
+		driverID,
+	)
+	return passengerID, err
+}

@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/preetigupta1005/ridehail-go/server"
-
 	"github.com/preetigupta1005/ridehail-go/database"
+	"github.com/preetigupta1005/ridehail-go/server"
+	"github.com/preetigupta1005/ridehail-go/websocket"
 
 	"github.com/sirupsen/logrus"
 )
@@ -21,11 +21,13 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
+	var hub = websocket.NewHub()
+
 	if err := database.ConnectDB(); err != nil {
 		logrus.Panicf("failed to connect database: %+v", err)
 	}
 
-	srv := server.SetUpRoutes()
+	srv := server.SetUpRoutes(hub)
 
 	go func() {
 		if err := srv.Run(":8080"); err != nil && !errors.Is(err, http.ErrServerClosed) {
