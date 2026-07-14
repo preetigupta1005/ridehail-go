@@ -7,7 +7,6 @@ import (
 
 	"github.com/preetigupta1005/ridehail-go/handlers"
 	"github.com/preetigupta1005/ridehail-go/middlewares"
-	"github.com/preetigupta1005/ridehail-go/websocket"
 )
 
 type Server struct {
@@ -21,14 +20,14 @@ const (
 	writeTimeout      = 5 * time.Minute
 )
 
-func SetUpRoutes(hub *websocket.Hub) *Server {
+func SetUpRoutes() *Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /v1/signup", handlers.SignupHandler)
 	mux.HandleFunc("POST /v1/login", handlers.LoginHandler)
 
 	mux.Handle("PATCH /v1/driver/availability", middlewares.DriverOnly(handlers.UpdateAvailabilityHandler))
-	mux.Handle("PATCH /v1/driver/location", middlewares.DriverOnly(handlers.UpdateLocationHandler(hub)))
+	mux.Handle("PATCH /v1/driver/location", middlewares.DriverOnly(handlers.UpdateLocationHandler))
 
 	mux.Handle("POST /v1/rides/request", middlewares.PassengerOnly(handlers.RequestRideHandler))
 
@@ -40,10 +39,6 @@ func SetUpRoutes(hub *websocket.Hub) *Server {
 
 	mux.Handle("GET /rides/activity", middlewares.AuthOnly(handlers.GetMyRidesHandler))
 
-	mux.HandleFunc("GET /ws", func(w http.ResponseWriter, r *http.Request) {
-		userID := r.URL.Query().Get("user_id")
-		websocket.ServeWS(hub, w, r, userID)
-	})
 	return &Server{Mux: mux}
 }
 func (svc *Server) Run(port string) error {
