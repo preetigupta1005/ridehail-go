@@ -8,10 +8,10 @@ import (
 	"github.com/preetigupta1005/ridehail-go/utils"
 )
 
-func Signup(name, email, phone, password, role, vehicleNumber, vehicleType, licenseNumber string) (*models.User, error) {
+func Signup(name, email, phone, password, role, vehicleNumber, vehicleType, licenseNumber string) (*models.User, string, error) {
 	hashedPwd, err := utils.HashedPassword(password)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	user := &models.User{
@@ -31,8 +31,16 @@ func Signup(name, email, phone, password, role, vehicleNumber, vehicleType, lice
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, "", err
+	}
 
-	return user, err
+	token, err := utils.GenerateToken(user.ID, user.Role)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, token, nil
 }
 
 func Login(email, password string) (string, error) {

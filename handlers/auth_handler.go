@@ -26,13 +26,16 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := services.Signup(req.Name, req.Email, req.Phone, req.Password, req.Role,
+	user, token, err := services.Signup(req.Name, req.Email, req.Phone, req.Password, req.Role,
 		req.VehicleNumber, req.VehicleType, req.LicenseNumber)
 	if err != nil {
 		utils.RespondError(w, http.StatusInternalServerError, err, "failed to create user")
 		return
 	}
-	utils.RespondJSON(w, http.StatusCreated, user)
+	utils.RespondJSON(w, http.StatusCreated, map[string]interface{}{
+		"user":  user,
+		"token": token,
+	})
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
