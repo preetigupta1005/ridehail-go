@@ -87,7 +87,7 @@ func CancelRideHandler(w http.ResponseWriter, r *http.Request) {
 	rideID := r.PathValue("id")
 
 	var req models.CancelRideBody
-	utils.ParseBody(r, &req) //optional-no need to handle error
+	utils.ParseBody(r, &req)
 
 	if err := repository.CancelRide(rideID, userID, role, req.Reason); err != nil {
 		utils.RespondError(w, http.StatusForbidden, err, "failed to cancel ride")
@@ -103,12 +103,7 @@ func GetMyRidesHandler(w http.ResponseWriter, r *http.Request) {
 	var rides []models.Ride
 	var err error
 
-	if role == "passenger" {
-		rides, err = repository.GetRidesByPassenger(userID)
-	} else {
-		rides, err = repository.GetRidesByDriver(userID)
-	}
-
+	rides, err = services.GetMyRides(userID, role)
 	if err != nil {
 		utils.RespondError(w, http.StatusInternalServerError, err, "failed to fetch rides")
 		return

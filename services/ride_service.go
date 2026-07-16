@@ -34,3 +34,10 @@ func RequestRide(passengerID string, pickupLat, pickupLng float64, pickupAddr st
 	}
 	return ride, nil
 }
+
+func GetMyRides(userID, role string) ([]models.Ride, error) {
+	if role == "passenger" {
+		return repository.GetRidesByPassenger(userID)
+	}
+	return repository.GetRidesByDriver(userID)
+}
