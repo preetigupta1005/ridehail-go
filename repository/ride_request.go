@@ -66,6 +66,6 @@ func AcceptRideRequest(rideID, driverID string) error {
 			return err
 		}
 
-		return err
+		return nil
 	})
 }
