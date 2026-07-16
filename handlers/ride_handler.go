@@ -18,6 +18,12 @@ func RequestRideHandler(w http.ResponseWriter, r *http.Request) {
 		utils.RespondError(w, http.StatusBadRequest, err, "invalid request body")
 		return
 	}
+
+	if err := utils.ValidateStruct(req); err != nil {
+		utils.RespondError(w, http.StatusBadRequest, err, "validation failed")
+		return
+	}
+	
 	ride, err := services.RequestRide(
 		userID,
 		req.PickupLat, req.PickupLng, req.PickupAddress,

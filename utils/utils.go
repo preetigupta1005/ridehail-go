@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/preetigupta1005/ridehail-go/models"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -55,4 +56,10 @@ func HashedPassword(password string) (string, error) {
 
 func CheckPassword(password, hashedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+var validate = validator.New()
+
+func ValidateStruct(s interface{}) error {
+	return validate.Struct(s)
 }

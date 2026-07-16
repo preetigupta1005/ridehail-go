@@ -14,9 +14,8 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		utils.RespondError(w, http.StatusBadRequest, err, "invalid request body")
 		return
 	}
-
-	if req.Role != "passenger" && req.Role != "driver" {
-		utils.RespondError(w, http.StatusBadRequest, nil, "role must be passenger or driver")
+	if err := utils.ValidateStruct(req); err != nil {
+		utils.RespondError(w, http.StatusBadRequest, err, "validation failed")
 		return
 	}
 
@@ -40,6 +39,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		utils.RespondError(w, http.StatusBadRequest, err, "invalid request body")
 		return
 	}
+
+	if err := utils.ValidateStruct(req); err != nil {
+		utils.RespondError(w, http.StatusBadRequest, err, "validation failed")
+		return
+	}
+
 	token, err := services.Login(req.Email, req.Password)
 	if err != nil {
 		utils.RespondError(w, http.StatusUnauthorized, err, "invalid email or password")

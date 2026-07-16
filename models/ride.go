@@ -25,5 +25,5 @@ type Ride struct {
 }
 
 type CancelRideBody struct {
-	Reason string `json:"reason"`
+	Reason string `json:"reason,omitempty"`
 }

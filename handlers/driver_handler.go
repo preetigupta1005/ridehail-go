@@ -4,18 +4,15 @@ import (
 	"net/http"
 
 	"github.com/preetigupta1005/ridehail-go/middlewares"
+	"github.com/preetigupta1005/ridehail-go/models"
 	"github.com/preetigupta1005/ridehail-go/repository"
 	"github.com/preetigupta1005/ridehail-go/utils"
 )
 
-type AvailabilityRequest struct {
-	IsAvailable bool `json:"is_available"`
-}
-
 func UpdateAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middlewares.UserIDKey).(string)
 
-	var req AvailabilityRequest
+	var req models.AvailabilityRequest
 	if err := utils.ParseBody(r, &req); err != nil {
 		utils.RespondError(w, http.StatusBadRequest, err, "invalid request body")
 		return
@@ -29,17 +26,17 @@ func UpdateAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	utils.RespondJSON(w, http.StatusOK, map[string]string{"message": "availability updated"})
 }
 
-type LocationRequest struct {
-	Lat float64 `json:"lat"`
-	Lng float64 `json:"lng"`
-}
-
 func UpdateLocationHandler(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middlewares.UserIDKey).(string)
 
-	var req LocationRequest
+	var req models.LocationRequest
 	if err := utils.ParseBody(r, &req); err != nil {
 		utils.RespondError(w, http.StatusBadRequest, err, "invalid request body")
+		return
+	}
+
+	if err := utils.ValidateStruct(req); err != nil {
+		utils.RespondError(w, http.StatusBadRequest, err, "validation failed")
 		return
 	}
 

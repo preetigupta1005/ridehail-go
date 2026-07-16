@@ -14,17 +14,17 @@ type User struct {
 }
 
 type SignupRequest struct {
-	Name          string `json:"name"`
-	Email         string `json:"email"`
-	Phone         string `json:"phone"`
-	Password      string `json:"password"`
-	Role          string `json:"role"`
+	Name          string `json:"name" validate:"required,min=2,max=100"`
+	Email         string `json:"email" validate:"required,email"`
+	Phone         string `json:"phone" validate:"required,len=10,numeric"`
+	Password      string `json:"password" validate:"required,min=6"`
+	Role          string `json:"role" validate:"required,oneof=passenger driver"`
 	VehicleNumber string `json:"vehicle_number,omitempty"`
 	VehicleType   string `json:"vehicle_type,omitempty"`
 	LicenseNumber string `json:"license_number,omitempty"`
 }
 
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
