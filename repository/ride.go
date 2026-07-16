@@ -43,44 +43,72 @@ func StartRide(rideID, driverID string) error {
 }
 
 func EndRide(rideID, driverID string) (float64, float64, error) {
-	var pickupLat, pickupLng, dropLat, dropLng float64
-	err := database.DB.QueryRowx(
-		`SELECT pickup_lat, pickup_lng, drop_lat, drop_lng FROM rides WHERE id=$1`, rideID,
-	).Scan(&pickupLat, &pickupLng, &dropLat, &dropLng)
-	if err != nil {
-		return 0, 0, err
-	}
+	var fare, distanceKm float64
 
-	var distanceMeters float64
-	err = database.DB.QueryRowx(
-		`SELECT ST_Distance(
-			ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-			ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography
-		)`,
-		pickupLng, pickupLat, dropLng, dropLat,
-	).Scan(&distanceMeters)
-	if err != nil {
-		return 0, 0, err
-	}
+	err := database.Tx(func(tx *sqlx.Tx) error {
+		var pickupLat, pickupLng, dropLat, dropLng float64
 
-	distanceKm := distanceMeters / 1000
-	fare := 30 + (distanceKm * 10)
+		err := tx.QueryRowx(
+			`SELECT pickup_lat, pickup_lng, drop_lat, drop_lng
+			 FROM rides
+			 WHERE id=$1`,
+			rideID,
+		).Scan(&pickupLat, &pickupLng, &dropLat, &dropLng)
+		if err != nil {
+			return err
+		}
 
-	result, err := database.DB.Exec(
-		`UPDATE rides SET status='completed', completed_at=now(), 
-		 fare_amount=$1, distance_km=$2 
-		 WHERE id=$3 AND driver_id=$4 AND status='ongoing'`,
-		fare, distanceKm, rideID, driverID,
-	)
-	if err != nil {
-		return 0, 0, err
-	}
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
-		return 0, 0, errors.New("ride not found or not ongoing")
-	}
+		var distanceMeters float64
+		err = tx.QueryRowx(
+			`SELECT ST_Distance(
+				ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+				ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography
+			)`,
+			pickupLng, pickupLat, dropLng, dropLat,
+		).Scan(&distanceMeters)
+		if err != nil {
+			return err
+		}
 
-	_, err = database.DB.Exec(`UPDATE driver_details SET is_on_ride=false WHERE user_id=$1`, driverID)
+		distanceKm = distanceMeters / 1000
+		fare = 30 + (distanceKm * 10)
+
+		result, err := tx.Exec(
+			`UPDATE rides
+			 SET status='completed', 
+			     completed_at=NOW(),
+			     fare_amount=$1,
+			     distance_km=$2
+			 WHERE id=$3
+			   AND driver_id=$4
+			   AND status='ongoing'`,
+			fare, distanceKm, rideID, driverID,
+		)
+		if err != nil {
+			return err
+		}
+
+		rows, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rows == 0 {
+			return errors.New("ride not found or not ongoing")
+		}
+
+		_, err = tx.Exec(
+			`UPDATE driver_details
+			 SET is_on_ride=false
+			 WHERE user_id=$1`,
+			driverID,
+		)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return 0, 0, err
 	}
