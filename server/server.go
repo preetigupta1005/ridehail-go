@@ -37,9 +37,11 @@ func SetUpRoutes() *Server {
 	mux.Handle("POST /v1/rides/{id}/end", middlewares.DriverOnly(handlers.EndRideHandler))
 	mux.Handle("POST /v1/rides/{id}/cancel", middlewares.AuthOnly(handlers.CancelRideHandler))
 
-	mux.Handle("GET /rides/activity", middlewares.AuthOnly(handlers.GetMyRidesHandler))
+	mux.Handle("GET /v1/rides/activity", middlewares.AuthOnly(handlers.GetMyRidesHandler))
 
 	mux.Handle("GET /v1/rides/{id}/location", middlewares.AuthOnly(handlers.GetRideLocationHandler))
+
+	mux.Handle("DELETE /v1/user", middlewares.AuthOnly(handlers.DeleteUserHandler))
 
 	return &Server{Mux: mux}
 }
