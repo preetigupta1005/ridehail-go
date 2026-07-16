@@ -23,7 +23,7 @@ func RequestRideHandler(w http.ResponseWriter, r *http.Request) {
 		utils.RespondError(w, http.StatusBadRequest, err, "validation failed")
 		return
 	}
-	
+
 	ride, err := services.RequestRide(
 		userID,
 		req.PickupLat, req.PickupLng, req.PickupAddress,
@@ -114,4 +114,15 @@ func GetMyRidesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.RespondJSON(w, http.StatusOK, rides)
+}
+
+func GetRideLocationHandler(w http.ResponseWriter, r *http.Request) {
+	rideID := r.PathValue("id")
+
+	loc, err := repository.GetDriverLocationForRide(rideID)
+	if err != nil {
+		utils.RespondError(w, http.StatusNotFound, err, "location not available")
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, loc)
 }

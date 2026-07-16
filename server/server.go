@@ -39,6 +39,8 @@ func SetUpRoutes() *Server {
 
 	mux.Handle("GET /rides/activity", middlewares.AuthOnly(handlers.GetMyRidesHandler))
 
+	mux.Handle("GET /v1/rides/{id}/location", middlewares.AuthOnly(handlers.GetRideLocationHandler))
+
 	return &Server{Mux: mux}
 }
 func (svc *Server) Run(port string) error {

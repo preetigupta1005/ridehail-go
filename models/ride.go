@@ -27,3 +27,9 @@ type Ride struct {
 type CancelRideBody struct {
 	Reason string `json:"reason,omitempty"`
 }
+
+type ActiveRideLocation struct {
+	RideID string  `db:"ride_id"`
+	Lat    float64 `db:"lat"`
+	Lng    float64 `db:"lng"`
+}

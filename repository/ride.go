@@ -147,3 +147,15 @@ func GetRidesByDriver(driverID string) ([]models.Ride, error) {
 	err := database.DB.Select(&rides, query, driverID)
 	return rides, err
 }
+
+func GetDriverLocationForRide(rideID string) (*models.ActiveRideLocation, error) {
+	var result models.ActiveRideLocation
+	query := `SELECT r.id as ride_id,
+	          ST_Y(dd.current_location::geometry) as lat,
+	          ST_X(dd.current_location::geometry) as lng
+	          FROM rides r
+	          JOIN driver_details dd ON dd.user_id = r.driver_id
+	          WHERE r.id=$1 AND r.status IN ('accepted', 'ongoing')`
+	err := database.DB.Get(&result, query, rideID)
+	return &result, err
+}
