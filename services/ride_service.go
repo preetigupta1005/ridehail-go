@@ -1,6 +1,8 @@
 package services
 
 import (
+	"github.com/jmoiron/sqlx"
+	"github.com/preetigupta1005/ridehail-go/database"
 	"github.com/preetigupta1005/ridehail-go/models"
 	"github.com/preetigupta1005/ridehail-go/repository"
 )
@@ -16,22 +18,30 @@ func RequestRide(passengerID string, pickupLat, pickupLng float64, pickupAddr st
 		DropAddress:   &dropAddr,
 	}
 
-	if err := repository.CreateRide(ride); err != nil {
-		return nil, err
-	}
+	err := database.Tx(func(tx *sqlx.Tx) error {
 
-	driverIDs, err := repository.GetNearbyDrivers(pickupLat, pickupLng, 5000)
+		if err := repository.CreateRide(tx, ride); err != nil {
+			return err
+		}
+
+		driverIDs, err := repository.GetNearbyDrivers(tx, pickupLat, pickupLng, 5000)
+		if err != nil {
+			return err
+		}
+
+		if len(driverIDs) > 0 {
+			if err := repository.CreateRideRequests(tx, ride.ID, driverIDs); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	if len(driverIDs) == 0 {
-		return ride, nil
-	}
-
-	if err := repository.CreateRideRequests(ride.ID, driverIDs); err != nil {
-		return nil, err
-	}
 	return ride, nil
 }
 
